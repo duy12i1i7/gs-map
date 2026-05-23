@@ -1,5 +1,23 @@
 # Dataset Notes
 
+## Lightweight famous datasets
+
+### NeRF Synthetic / Blender: `blender-lego`, `blender-chair`, `blender-drums`, `blender-ficus`, `blender-hotdog`, `blender-materials`, `blender-mic`, `blender-ship`
+
+Đây là benchmark kinh điển của NeRF, nổi tiếng hơn `synthetic-map` và nhẹ hơn Mill19 rất nhiều. `run.sh download blender-lego` dùng downloader Blender của Nerfstudio; downloader này tải bộ Blender scenes, sau đó bạn có thể train từng scene bằng tên `blender-*`.
+
+```bash
+./run.sh download blender-lego
+ITERATIONS=7000 ./run.sh train blender-lego
+```
+
+Đổi scene:
+
+```bash
+ITERATIONS=7000 ./run.sh train blender-hotdog
+ITERATIONS=7000 ./run.sh train blender-chair
+```
+
 ## Recommended map-like datasets
 
 ### `synthetic-map`

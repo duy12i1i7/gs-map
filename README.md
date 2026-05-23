@@ -18,14 +18,14 @@ Nếu dùng Docker:
 chmod +x run.sh
 ./run.sh doctor
 ./run.sh setup
-./run.sh download synthetic-map
-ITERATIONS=1000 ./run.sh train synthetic-map
+./run.sh download blender-lego
+ITERATIONS=7000 ./run.sh train blender-lego
 ```
 
 Sau khi train, mở viewer:
 
 ```bash
-./run.sh viewer synthetic-map
+./run.sh viewer blender-lego
 ```
 
 ## Notebook cloud
@@ -34,7 +34,7 @@ Sau khi train, mở viewer:
 - Kaggle 2 GPU: `notebooks/gs_map_kaggle_2gpu.ipynb`
 
 Hai notebook clone repo rồi cài `requirements.txt` trước khi kiểm tra `torch`/CUDA.
-Mặc định notebook chạy `synthetic-map`, một dataset nhỏ sinh local, để tránh lỗi hết disk khi tải Mill19.
+Mặc định notebook chạy `blender-lego`, scene nổi tiếng của NeRF Synthetic, nhẹ hơn Mill19 nhiều.
 Kaggle notebook mặc định chạy `NUM_DEVICES=2`. Nếu runtime 2 GPU của Kaggle bị lỗi DDP/Nerfstudio, đổi `NUM_DEVICES = "1"` trong cell cấu hình để fallback sang 1 GPU.
 
 Viewer dùng port `7007` mặc định. Nếu cần đổi:
@@ -51,24 +51,27 @@ PORT=7010 ./run.sh viewer mill19-building
 
 Các lựa chọn hiện tại:
 
+- `blender-lego`: scene nổi tiếng của NeRF Synthetic, khuyến nghị chạy đầu tiên.
+- `blender-chair`, `blender-drums`, `blender-ficus`, `blender-hotdog`, `blender-materials`, `blender-mic`, `blender-ship`: các scene NeRF Synthetic khác.
 - `synthetic-map`: dataset map-like sinh local để smoke-test, không cần tải ngoài.
 - `mill19-building`: aerial/industrial map-like scene, khuyến nghị chạy đầu tiên nếu muốn dataset liên quan đến map.
 - `mill19-rubble`: aerial/industrial map-like scene khác từ Mill 19.
 - `nerfstudio-poster`: dataset nhỏ để sanity-check pipeline.
-- `blender-lego`: scene synthetic kinh điển của NeRF.
 
 ## Lệnh thường dùng
 
 Tải dataset:
 
 ```bash
-./run.sh download synthetic-map
+./run.sh download blender-lego
 ```
+
+Lệnh trên tải bộ NeRF Synthetic/Blender của Nerfstudio; sau đó có thể train bất kỳ scene `blender-*`.
 
 Train:
 
 ```bash
-ITERATIONS=30000 ./run.sh train synthetic-map
+ITERATIONS=7000 ./run.sh train blender-lego
 ```
 
 Chạy multi-GPU khi backend hỗ trợ:
@@ -80,13 +83,13 @@ NUM_DEVICES=2 ITERATIONS=30000 ./run.sh train mill19-building
 Eval:
 
 ```bash
-./run.sh eval mill19-building
+./run.sh eval blender-lego
 ```
 
 Export splat:
 
 ```bash
-./run.sh export mill19-building
+./run.sh export blender-lego
 ```
 
 Kết quả chính nằm ở:
@@ -106,12 +109,13 @@ Mặc định `run.sh` tự chọn:
 
 ```bash
 GSMAP_BACKEND=docker ./run.sh train mill19-building
+GSMAP_BACKEND=docker ./run.sh train blender-lego
 ```
 
 Ép native:
 
 ```bash
-GSMAP_BACKEND=native ./run.sh train mill19-building
+GSMAP_BACKEND=native ./run.sh train blender-lego
 ```
 
 ## Ghi chú cho máy hiện tại

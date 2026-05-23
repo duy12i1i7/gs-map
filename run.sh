@@ -37,10 +37,17 @@ Usage:
 
 Datasets:
   synthetic-map    Local generated map-like smoke-test dataset.
+  blender-chair    Classic NeRF Synthetic scene.
+  blender-drums    Classic NeRF Synthetic scene.
+  blender-ficus    Classic NeRF Synthetic scene.
+  blender-hotdog   Classic NeRF Synthetic scene.
   mill19-building  Aerial/industrial map-like scene from Mill 19.
   mill19-rubble    Aerial/industrial map-like scene from Mill 19.
   nerfstudio-poster Small sanity-check dataset.
   blender-lego     Synthetic NeRF dataset scene.
+  blender-materials Synthetic NeRF dataset scene.
+  blender-mic      Synthetic NeRF dataset scene.
+  blender-ship     Synthetic NeRF dataset scene.
 
 Useful env vars:
   ITERATIONS=7000            Reduce train time for a smoke run.
@@ -65,10 +72,17 @@ have() {
 dataset_path_container() {
   case "${1:-}" in
     synthetic-map) echo "/workspace/data/synthetic-map" ;;
+    blender-chair) echo "/workspace/data/blender/chair" ;;
+    blender-drums) echo "/workspace/data/blender/drums" ;;
+    blender-ficus) echo "/workspace/data/blender/ficus" ;;
+    blender-hotdog) echo "/workspace/data/blender/hotdog" ;;
     mill19-building) echo "/workspace/data/mill19/building" ;;
     mill19-rubble) echo "/workspace/data/mill19/rubble" ;;
     nerfstudio-poster) echo "/workspace/data/nerfstudio/poster" ;;
     blender-lego) echo "/workspace/data/blender/lego" ;;
+    blender-materials) echo "/workspace/data/blender/materials" ;;
+    blender-mic) echo "/workspace/data/blender/mic" ;;
+    blender-ship) echo "/workspace/data/blender/ship" ;;
     *) return 1 ;;
   esac
 }
@@ -76,10 +90,17 @@ dataset_path_container() {
 dataset_path_host() {
   case "${1:-}" in
     synthetic-map) echo "${DATA_DIR}/synthetic-map" ;;
+    blender-chair) echo "${DATA_DIR}/blender/chair" ;;
+    blender-drums) echo "${DATA_DIR}/blender/drums" ;;
+    blender-ficus) echo "${DATA_DIR}/blender/ficus" ;;
+    blender-hotdog) echo "${DATA_DIR}/blender/hotdog" ;;
     mill19-building) echo "${DATA_DIR}/mill19/building" ;;
     mill19-rubble) echo "${DATA_DIR}/mill19/rubble" ;;
     nerfstudio-poster) echo "${DATA_DIR}/nerfstudio/poster" ;;
     blender-lego) echo "${DATA_DIR}/blender/lego" ;;
+    blender-materials) echo "${DATA_DIR}/blender/materials" ;;
+    blender-mic) echo "${DATA_DIR}/blender/mic" ;;
+    blender-ship) echo "${DATA_DIR}/blender/ship" ;;
     *) return 1 ;;
   esac
 }
@@ -87,11 +108,18 @@ dataset_path_host() {
 download_command() {
   case "${1:-}" in
     synthetic-map) echo "python3 scripts/make_synthetic_map.py /workspace/data/synthetic-map" ;;
+    blender-chair|blender-drums|blender-ficus|blender-hotdog|blender-lego|blender-materials|blender-mic|blender-ship) echo "ns-download-data blender --save-dir /workspace/data" ;;
     mill19-building) echo "ns-download-data mill19 --capture-name building --save-dir /workspace/data" ;;
     mill19-rubble) echo "ns-download-data mill19 --capture-name rubble --save-dir /workspace/data" ;;
     nerfstudio-poster) echo "ns-download-data nerfstudio --capture-name poster --save-dir /workspace/data" ;;
-    blender-lego) echo "ns-download-data blender --save-dir /workspace/data" ;;
     *) return 1 ;;
+  esac
+}
+
+dataparser_command() {
+  case "${1:-}" in
+    blender-chair|blender-drums|blender-ficus|blender-hotdog|blender-lego|blender-materials|blender-mic|blender-ship) echo "blender-data" ;;
+    *) echo "" ;;
   esac
 }
 
@@ -199,15 +227,22 @@ print_datasets() {
   cat <<'EOF'
 Available datasets:
   synthetic-map     Local generated map-like smoke-test dataset, no download needed.
+  blender-lego      Recommended famous lightweight benchmark scene.
+  blender-chair     Classic NeRF Synthetic scene.
+  blender-drums     Classic NeRF Synthetic scene.
+  blender-ficus     Classic NeRF Synthetic scene.
+  blender-hotdog    Classic NeRF Synthetic scene.
+  blender-materials Classic NeRF Synthetic scene.
+  blender-mic       Classic NeRF Synthetic scene.
+  blender-ship      Classic NeRF Synthetic scene.
   mill19-building   Recommended map-like run. Large aerial/industrial scene.
   mill19-rubble     Recommended map-like run. Large aerial/industrial scene.
   nerfstudio-poster Small sanity-check dataset before spending GPU time.
-  blender-lego      Classic synthetic NeRF scene.
 
 Suggested first GPU run:
-  ./run.sh download synthetic-map
-  ITERATIONS=1000 ./run.sh train synthetic-map
-  ./run.sh viewer synthetic-map
+  ./run.sh download blender-lego
+  ITERATIONS=7000 ./run.sh train blender-lego
+  ./run.sh viewer blender-lego
 EOF
 }
 
@@ -252,7 +287,9 @@ train_dataset() {
   local dataset="$1"
   ensure_dataset_name "${dataset}"
   local data_path
+  local dataparser
   data_path="$(dataset_path_container "${dataset}")"
+  dataparser="$(dataparser_command "${dataset}")"
   run_backend "test -d '${data_path}' || { echo 'Dataset missing: ${data_path}. Run ./run.sh download ${dataset} first.' >&2; exit 2; }
     mkdir -p /workspace/outputs &&
     ns-train splatfacto \
@@ -262,7 +299,8 @@ train_dataset() {
       --machine.num-devices '${NUM_DEVICES}' \
       --max-num-iterations '${ITERATIONS}' \
       --viewer.websocket-host 0.0.0.0 \
-      --viewer.websocket-port '${PORT}'"
+      --viewer.websocket-port '${PORT}' \
+      ${dataparser}"
 }
 
 eval_dataset() {
@@ -289,8 +327,8 @@ viewer() {
 
 quickstart() {
   setup
-  download_dataset synthetic-map
-  train_dataset synthetic-map
+  download_dataset blender-lego
+  train_dataset blender-lego
 }
 
 main() {
