@@ -1,0 +1,16 @@
+services:
+  nerfstudio:
+    image: ${NERFSTUDIO_IMAGE:-ghcr.io/nerfstudio-project/nerfstudio:latest}
+    working_dir: /workspace
+    shm_size: "12gb"
+    gpus: all
+    ports:
+      - "${PORT:-7007}:${PORT:-7007}"
+    environment:
+      HOME: /workspace/.home
+      MPLCONFIGDIR: /workspace/.cache/matplotlib
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - .:/workspace
+      - ${HOME}/.cache/gsmap:/workspace/.home/.cache
+    command: bash
