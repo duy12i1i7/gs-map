@@ -18,14 +18,14 @@ Nếu dùng Docker:
 chmod +x run.sh
 ./run.sh doctor
 ./run.sh setup
-ITERATIONS=7000 ./run.sh download mill19-building
-ITERATIONS=7000 ./run.sh train mill19-building
+./run.sh download synthetic-map
+ITERATIONS=1000 ./run.sh train synthetic-map
 ```
 
 Sau khi train, mở viewer:
 
 ```bash
-./run.sh viewer mill19-building
+./run.sh viewer synthetic-map
 ```
 
 Viewer dùng port `7007` mặc định. Nếu cần đổi:
@@ -42,6 +42,7 @@ PORT=7010 ./run.sh viewer mill19-building
 
 Các lựa chọn hiện tại:
 
+- `synthetic-map`: dataset map-like sinh local để smoke-test, không cần tải ngoài.
 - `mill19-building`: aerial/industrial map-like scene, khuyến nghị chạy đầu tiên nếu muốn dataset liên quan đến map.
 - `mill19-rubble`: aerial/industrial map-like scene khác từ Mill 19.
 - `nerfstudio-poster`: dataset nhỏ để sanity-check pipeline.
@@ -52,13 +53,13 @@ Các lựa chọn hiện tại:
 Tải dataset:
 
 ```bash
-./run.sh download mill19-building
+./run.sh download synthetic-map
 ```
 
 Train:
 
 ```bash
-ITERATIONS=30000 ./run.sh train mill19-building
+ITERATIONS=30000 ./run.sh train synthetic-map
 ```
 
 Eval:
@@ -101,4 +102,3 @@ GSMAP_BACKEND=native ./run.sh train mill19-building
 ## Ghi chú cho máy hiện tại
 
 Workspace này đang ở macOS ARM, không thấy NVIDIA GPU. Bạn nên chạy repo này trên server/desktop Linux có NVIDIA GPU, hoặc clone sang Colab/RunPod/Lambda/AWS GPU instance rồi chạy các lệnh ở trên.
-

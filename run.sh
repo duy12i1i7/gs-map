@@ -35,6 +35,7 @@ Usage:
   ./run.sh quickstart
 
 Datasets:
+  synthetic-map    Local generated map-like smoke-test dataset.
   mill19-building  Aerial/industrial map-like scene from Mill 19.
   mill19-rubble    Aerial/industrial map-like scene from Mill 19.
   nerfstudio-poster Small sanity-check dataset.
@@ -61,6 +62,7 @@ have() {
 
 dataset_path_container() {
   case "${1:-}" in
+    synthetic-map) echo "/workspace/data/synthetic-map" ;;
     mill19-building) echo "/workspace/data/mill19/building" ;;
     mill19-rubble) echo "/workspace/data/mill19/rubble" ;;
     nerfstudio-poster) echo "/workspace/data/nerfstudio/poster" ;;
@@ -71,6 +73,7 @@ dataset_path_container() {
 
 dataset_path_host() {
   case "${1:-}" in
+    synthetic-map) echo "${DATA_DIR}/synthetic-map" ;;
     mill19-building) echo "${DATA_DIR}/mill19/building" ;;
     mill19-rubble) echo "${DATA_DIR}/mill19/rubble" ;;
     nerfstudio-poster) echo "${DATA_DIR}/nerfstudio/poster" ;;
@@ -81,6 +84,7 @@ dataset_path_host() {
 
 download_command() {
   case "${1:-}" in
+    synthetic-map) echo "python3 scripts/make_synthetic_map.py /workspace/data/synthetic-map" ;;
     mill19-building) echo "ns-download-data mill19 --capture-name building --save-dir /workspace/data" ;;
     mill19-rubble) echo "ns-download-data mill19 --capture-name rubble --save-dir /workspace/data" ;;
     nerfstudio-poster) echo "ns-download-data nerfstudio --capture-name poster --save-dir /workspace/data" ;;
@@ -192,15 +196,16 @@ config_arg_container() {
 print_datasets() {
   cat <<'EOF'
 Available datasets:
+  synthetic-map     Local generated map-like smoke-test dataset, no download needed.
   mill19-building   Recommended map-like run. Large aerial/industrial scene.
   mill19-rubble     Recommended map-like run. Large aerial/industrial scene.
   nerfstudio-poster Small sanity-check dataset before spending GPU time.
   blender-lego      Classic synthetic NeRF scene.
 
 Suggested first GPU run:
-  ITERATIONS=7000 ./run.sh download mill19-building
-  ITERATIONS=7000 ./run.sh train mill19-building
-  ./run.sh viewer mill19-building
+  ./run.sh download synthetic-map
+  ITERATIONS=1000 ./run.sh train synthetic-map
+  ./run.sh viewer synthetic-map
 EOF
 }
 
@@ -280,8 +285,8 @@ viewer() {
 
 quickstart() {
   setup
-  download_dataset mill19-building
-  train_dataset mill19-building
+  download_dataset synthetic-map
+  train_dataset synthetic-map
 }
 
 main() {

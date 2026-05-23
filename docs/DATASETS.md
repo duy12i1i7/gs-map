@@ -2,6 +2,15 @@
 
 ## Recommended map-like datasets
 
+### `synthetic-map`
+
+`synthetic-map` là dataset map-like sinh local để smoke-test pipeline khi các nguồn dataset public bị chặn hoặc bạn chưa muốn tải scene lớn. Nó tạo ảnh, `transforms.json` và point cloud `.ply` theo format Nerfstudio.
+
+```bash
+./run.sh download synthetic-map
+ITERATIONS=1000 ./run.sh train synthetic-map
+```
+
 ### Mill 19: `mill19-building`, `mill19-rubble`
 
 Mill 19 là dataset large-scale aerial/industrial scene từ Mega-NeRF. Trong project này, dataset được tải bằng `ns-download-data mill19` và train bằng Nerfstudio `splatfacto`.
@@ -58,4 +67,3 @@ Synthetic dataset kinh điển của NeRF. Không phải map, nhưng tốt để
 ./run.sh download blender-lego
 ITERATIONS=3000 ./run.sh train blender-lego
 ```
-
