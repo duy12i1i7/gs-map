@@ -4,4 +4,5 @@
 numpy<2
 setuptools<81
 ninja
+huggingface_hub>=0.25
 nerfstudio==1.1.5

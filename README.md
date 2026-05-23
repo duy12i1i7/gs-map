@@ -66,7 +66,7 @@ Tải dataset:
 ./run.sh download blender-lego
 ```
 
-Lệnh trên tải bộ NeRF Synthetic/Blender của Nerfstudio; sau đó có thể train bất kỳ scene `blender-*`.
+Lệnh trên tải riêng scene `lego` từ Hugging Face mirror để tránh lỗi Google Drive/gdown của downloader mặc định. Có thể đổi sang scene `blender-*` khác.
 
 Train:
 

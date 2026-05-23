@@ -108,7 +108,10 @@ dataset_path_host() {
 download_command() {
   case "${1:-}" in
     synthetic-map) echo "python3 scripts/make_synthetic_map.py /workspace/data/synthetic-map" ;;
-    blender-chair|blender-drums|blender-ficus|blender-hotdog|blender-lego|blender-materials|blender-mic|blender-ship) echo "ns-download-data blender --save-dir /workspace/data" ;;
+    blender-chair|blender-drums|blender-ficus|blender-hotdog|blender-lego|blender-materials|blender-mic|blender-ship)
+      local scene="${1#blender-}"
+      echo "python3 scripts/download_blender_scene.py '${scene}' '/workspace/data/blender/${scene}'"
+      ;;
     mill19-building) echo "ns-download-data mill19 --capture-name building --save-dir /workspace/data" ;;
     mill19-rubble) echo "ns-download-data mill19 --capture-name rubble --save-dir /workspace/data" ;;
     nerfstudio-poster) echo "ns-download-data nerfstudio --capture-name poster --save-dir /workspace/data" ;;

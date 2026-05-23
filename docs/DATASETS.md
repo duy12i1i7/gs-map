@@ -4,7 +4,7 @@
 
 ### NeRF Synthetic / Blender: `blender-lego`, `blender-chair`, `blender-drums`, `blender-ficus`, `blender-hotdog`, `blender-materials`, `blender-mic`, `blender-ship`
 
-Đây là benchmark kinh điển của NeRF, nổi tiếng hơn `synthetic-map` và nhẹ hơn Mill19 rất nhiều. `run.sh download blender-lego` dùng downloader Blender của Nerfstudio; downloader này tải bộ Blender scenes, sau đó bạn có thể train từng scene bằng tên `blender-*`.
+Đây là benchmark kinh điển của NeRF, nổi tiếng hơn `synthetic-map` và nhẹ hơn Mill19 rất nhiều. `run.sh download blender-lego` tải riêng scene `lego` từ Hugging Face mirror để tránh lỗi Google Drive/gdown của downloader mặc định.
 
 ```bash
 ./run.sh download blender-lego
