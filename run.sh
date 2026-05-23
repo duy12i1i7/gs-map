@@ -9,6 +9,7 @@ CACHE_DIR="${CACHE_DIR:-${HOME}/.cache/gsmap}"
 PORT="${PORT:-7007}"
 ITERATIONS="${ITERATIONS:-30000}"
 NUM_DEVICES="${NUM_DEVICES:-1}"
+VIEWER_QUIT_ON_TRAIN_COMPLETION="${VIEWER_QUIT_ON_TRAIN_COMPLETION:-True}"
 NERFSTUDIO_IMAGE="${NERFSTUDIO_IMAGE:-ghcr.io/nerfstudio-project/nerfstudio:latest}"
 GSMAP_BACKEND="${GSMAP_BACKEND:-auto}"
 ALLOW_NO_NVIDIA="${ALLOW_NO_NVIDIA:-0}"
@@ -53,6 +54,8 @@ Useful env vars:
   ITERATIONS=7000            Reduce train time for a smoke run.
   NUM_DEVICES=2              Use multiple GPUs when available.
   PORT=7007                  Viewer websocket port.
+  VIEWER_QUIT_ON_TRAIN_COMPLETION=True
+                            Stop the viewer when training finishes.
   GSMAP_BACKEND=docker       Force Docker backend.
   GSMAP_BACKEND=native       Use local ns-* commands.
   NERFSTUDIO_IMAGE=...       Override Docker image.
@@ -257,6 +260,7 @@ doctor() {
   echo "Outputs: ${OUTPUT_DIR}"
   echo "Exports: ${EXPORT_DIR}"
   echo "Num devices: ${NUM_DEVICES}"
+  echo "Viewer quits on train completion: ${VIEWER_QUIT_ON_TRAIN_COMPLETION}"
   echo
   printf "docker: "; have docker && docker --version || echo "not found"
   printf "nvidia-smi: "; have nvidia-smi && nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader || echo "not found"
@@ -303,6 +307,7 @@ train_dataset() {
       --max-num-iterations '${ITERATIONS}' \
       --viewer.websocket-host 0.0.0.0 \
       --viewer.websocket-port '${PORT}' \
+      --viewer.quit-on-train-completion '${VIEWER_QUIT_ON_TRAIN_COMPLETION}' \
       ${dataparser}"
 }
 
