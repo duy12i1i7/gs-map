@@ -28,6 +28,13 @@ Sau khi train, mở viewer:
 ./run.sh viewer synthetic-map
 ```
 
+## Notebook cloud
+
+- Colab 1 GPU: `notebooks/gs_map_colab_1gpu.ipynb`
+- Kaggle 2 GPU: `notebooks/gs_map_kaggle_2gpu.ipynb`
+
+Kaggle notebook mặc định chạy `NUM_DEVICES=2`. Nếu runtime 2 GPU của Kaggle bị lỗi DDP/Nerfstudio, đổi `NUM_DEVICES = "1"` trong cell cấu hình để fallback sang 1 GPU.
+
 Viewer dùng port `7007` mặc định. Nếu cần đổi:
 
 ```bash
@@ -60,6 +67,12 @@ Train:
 
 ```bash
 ITERATIONS=30000 ./run.sh train synthetic-map
+```
+
+Chạy multi-GPU khi backend hỗ trợ:
+
+```bash
+NUM_DEVICES=2 ITERATIONS=30000 ./run.sh train mill19-building
 ```
 
 Eval:

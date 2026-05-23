@@ -8,6 +8,7 @@ EXPORT_DIR="${EXPORT_DIR:-${ROOT_DIR}/exports}"
 CACHE_DIR="${CACHE_DIR:-${HOME}/.cache/gsmap}"
 PORT="${PORT:-7007}"
 ITERATIONS="${ITERATIONS:-30000}"
+NUM_DEVICES="${NUM_DEVICES:-1}"
 NERFSTUDIO_IMAGE="${NERFSTUDIO_IMAGE:-ghcr.io/nerfstudio-project/nerfstudio:latest}"
 GSMAP_BACKEND="${GSMAP_BACKEND:-auto}"
 ALLOW_NO_NVIDIA="${ALLOW_NO_NVIDIA:-0}"
@@ -43,6 +44,7 @@ Datasets:
 
 Useful env vars:
   ITERATIONS=7000            Reduce train time for a smoke run.
+  NUM_DEVICES=2              Use multiple GPUs when available.
   PORT=7007                  Viewer websocket port.
   GSMAP_BACKEND=docker       Force Docker backend.
   GSMAP_BACKEND=native       Use local ns-* commands.
@@ -216,6 +218,7 @@ doctor() {
   echo "Data: ${DATA_DIR}"
   echo "Outputs: ${OUTPUT_DIR}"
   echo "Exports: ${EXPORT_DIR}"
+  echo "Num devices: ${NUM_DEVICES}"
   echo
   printf "docker: "; have docker && docker --version || echo "not found"
   printf "nvidia-smi: "; have nvidia-smi && nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader || echo "not found"
@@ -256,6 +259,7 @@ train_dataset() {
       --data '${data_path}' \
       --experiment-name '${dataset}' \
       --output-dir /workspace/outputs \
+      --machine.num-devices '${NUM_DEVICES}' \
       --max-num-iterations '${ITERATIONS}' \
       --viewer.websocket-host 0.0.0.0 \
       --viewer.websocket-port '${PORT}'"
