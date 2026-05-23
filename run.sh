@@ -72,6 +72,27 @@ have() {
   command -v "$1" >/dev/null 2>&1
 }
 
+configure_conda_compilers() {
+  if [[ -z "${CONDA_PREFIX:-}" ]]; then
+    return
+  fi
+
+  local conda_gcc="${CONDA_PREFIX}/bin/x86_64-conda-linux-gnu-gcc"
+  local conda_gxx="${CONDA_PREFIX}/bin/x86_64-conda-linux-gnu-g++"
+
+  if [[ -z "${CC:-}" && -x "${conda_gcc}" ]]; then
+    export CC="${conda_gcc}"
+  fi
+  if [[ -z "${CXX:-}" && -x "${conda_gxx}" ]]; then
+    export CXX="${conda_gxx}"
+  fi
+  if [[ -z "${CUDAHOSTCXX:-}" && -n "${CXX:-}" ]]; then
+    export CUDAHOSTCXX="${CXX}"
+  fi
+}
+
+configure_conda_compilers
+
 dataset_path_container() {
   case "${1:-}" in
     synthetic-map) echo "/workspace/data/synthetic-map" ;;
@@ -261,6 +282,9 @@ doctor() {
   echo "Exports: ${EXPORT_DIR}"
   echo "Num devices: ${NUM_DEVICES}"
   echo "Viewer quits on train completion: ${VIEWER_QUIT_ON_TRAIN_COMPLETION}"
+  echo "C compiler: ${CC:-system default}"
+  echo "C++ compiler: ${CXX:-system default}"
+  echo "CUDA host compiler: ${CUDAHOSTCXX:-system default}"
   echo
   printf "docker: "; have docker && docker --version || echo "not found"
   printf "nvidia-smi: "; have nvidia-smi && nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader || echo "not found"
