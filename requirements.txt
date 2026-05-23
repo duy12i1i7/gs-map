@@ -1,0 +1,7 @@
+# Cloud notebook requirements for Colab/Kaggle.
+# Select a GPU runtime first. Colab/Kaggle usually provide a CUDA-enabled
+# PyTorch build; nerfstudio depends on torch and will install it if missing.
+numpy<2
+setuptools<81
+ninja
+nerfstudio==1.1.5
