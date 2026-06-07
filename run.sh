@@ -311,7 +311,7 @@ download_dataset() {
   ensure_dataset_name "${dataset}"
   local command
   command="$(download_command "${dataset}")"
-  run_backend "mkdir -p /workspace/data && ${command}"
+  run_backend "python3 -m pip install -q huggingface_hub && mkdir -p /workspace/data && ${command}"
 }
 
 train_dataset() {
