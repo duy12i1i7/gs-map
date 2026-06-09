@@ -150,18 +150,18 @@ download_command() {
       ;;
     mill19-building)
       if [[ -n "${MILL19_BUILDING_GDRIVE_URL:-}" ]]; then
-        echo "mkdir -p /workspace/data/mill19 && python3 -m gdown --fuzzy '${MILL19_BUILDING_GDRIVE_URL}' -O /workspace/data/mill19/building.tgz && tar -xzf /workspace/data/mill19/building.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/building.tgz"
+        echo "mkdir -p /workspace/data/mill19 && python3 -m gdown --fuzzy '${MILL19_BUILDING_GDRIVE_URL}' -O /workspace/data/mill19/building.tgz && tar -xzf /workspace/data/mill19/building.tgz -C /workspace/data/mill19 && (test -d /workspace/data/mill19/building || mv /workspace/data/mill19/building-* /workspace/data/mill19/building 2>/dev/null || true) && rm -f /workspace/data/mill19/building.tgz"
       elif [[ -n "${MILL19_BUILDING_URL:-}" ]]; then
-        echo "mkdir -p /workspace/data/mill19 && curl -L --fail --retry 10 --retry-connrefused --retry-delay 5 --connect-timeout 30 --continue-at - '${MILL19_BUILDING_URL}' -o /workspace/data/mill19/building.tgz && tar -xzf /workspace/data/mill19/building.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/building.tgz"
+        echo "mkdir -p /workspace/data/mill19 && curl -L --fail --retry 10 --retry-connrefused --retry-delay 5 --connect-timeout 30 --continue-at - '${MILL19_BUILDING_URL}' -o /workspace/data/mill19/building.tgz && tar -xzf /workspace/data/mill19/building.tgz -C /workspace/data/mill19 && (test -d /workspace/data/mill19/building || mv /workspace/data/mill19/building-* /workspace/data/mill19/building 2>/dev/null || true) && rm -f /workspace/data/mill19/building.tgz"
       else
         echo "ns-download-data mill19 --capture-name building --save-dir /workspace/data"
       fi
       ;;
     mill19-rubble)
       if [[ -n "${MILL19_RUBBLE_GDRIVE_URL:-}" ]]; then
-        echo "mkdir -p /workspace/data/mill19 && python3 -m gdown --fuzzy '${MILL19_RUBBLE_GDRIVE_URL}' -O /workspace/data/mill19/rubble.tgz && tar -xzf /workspace/data/mill19/rubble.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/rubble.tgz"
+        echo "mkdir -p /workspace/data/mill19 && python3 -m gdown --fuzzy '${MILL19_RUBBLE_GDRIVE_URL}' -O /workspace/data/mill19/rubble.tgz && tar -xzf /workspace/data/mill19/rubble.tgz -C /workspace/data/mill19 && (test -d /workspace/data/mill19/rubble || mv /workspace/data/mill19/rubble-* /workspace/data/mill19/rubble 2>/dev/null || true) && rm -f /workspace/data/mill19/rubble.tgz"
       elif [[ -n "${MILL19_RUBBLE_URL:-}" ]]; then
-        echo "mkdir -p /workspace/data/mill19 && curl -L --fail --retry 10 --retry-connrefused --retry-delay 5 --connect-timeout 30 --continue-at - '${MILL19_RUBBLE_URL}' -o /workspace/data/mill19/rubble.tgz && tar -xzf /workspace/data/mill19/rubble.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/rubble.tgz"
+        echo "mkdir -p /workspace/data/mill19 && curl -L --fail --retry 10 --retry-connrefused --retry-delay 5 --connect-timeout 30 --continue-at - '${MILL19_RUBBLE_URL}' -o /workspace/data/mill19/rubble.tgz && tar -xzf /workspace/data/mill19/rubble.tgz -C /workspace/data/mill19 && (test -d /workspace/data/mill19/rubble || mv /workspace/data/mill19/rubble-* /workspace/data/mill19/rubble 2>/dev/null || true) && rm -f /workspace/data/mill19/rubble.tgz"
       else
         echo "ns-download-data mill19 --capture-name rubble --save-dir /workspace/data"
       fi
