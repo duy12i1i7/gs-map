@@ -150,7 +150,7 @@ download_command() {
       ;;
     mill19-building)
       if [[ -n "${MILL19_BUILDING_GDRIVE_URL:-}" ]]; then
-        echo "mkdir -p /workspace/data/mill19 && python3 -m gdown '${MILL19_BUILDING_GDRIVE_URL}' -O /workspace/data/mill19/building.tgz && tar -xzf /workspace/data/mill19/building.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/building.tgz"
+        echo "mkdir -p /workspace/data/mill19 && python3 -m gdown --fuzzy '${MILL19_BUILDING_GDRIVE_URL}' -O /workspace/data/mill19/building.tgz && tar -xzf /workspace/data/mill19/building.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/building.tgz"
       elif [[ -n "${MILL19_BUILDING_URL:-}" ]]; then
         echo "mkdir -p /workspace/data/mill19 && curl -L --fail --retry 10 --retry-connrefused --retry-delay 5 --connect-timeout 30 --continue-at - '${MILL19_BUILDING_URL}' -o /workspace/data/mill19/building.tgz && tar -xzf /workspace/data/mill19/building.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/building.tgz"
       else
@@ -159,7 +159,7 @@ download_command() {
       ;;
     mill19-rubble)
       if [[ -n "${MILL19_RUBBLE_GDRIVE_URL:-}" ]]; then
-        echo "mkdir -p /workspace/data/mill19 && python3 -m gdown '${MILL19_RUBBLE_GDRIVE_URL}' -O /workspace/data/mill19/rubble.tgz && tar -xzf /workspace/data/mill19/rubble.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/rubble.tgz"
+        echo "mkdir -p /workspace/data/mill19 && python3 -m gdown --fuzzy '${MILL19_RUBBLE_GDRIVE_URL}' -O /workspace/data/mill19/rubble.tgz && tar -xzf /workspace/data/mill19/rubble.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/rubble.tgz"
       elif [[ -n "${MILL19_RUBBLE_URL:-}" ]]; then
         echo "mkdir -p /workspace/data/mill19 && curl -L --fail --retry 10 --retry-connrefused --retry-delay 5 --connect-timeout 30 --continue-at - '${MILL19_RUBBLE_URL}' -o /workspace/data/mill19/rubble.tgz && tar -xzf /workspace/data/mill19/rubble.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/rubble.tgz"
       else

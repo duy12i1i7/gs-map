@@ -57,7 +57,7 @@ Các lựa chọn hiện tại:
 - `mill19-building`: aerial/industrial map-like scene, khuyến nghị chạy đầu tiên nếu muốn dataset liên quan đến map.
 - `mill19-rubble`: aerial/industrial map-like scene khác từ Mill 19.
 
-Nếu `storage.cmusatyalab.org` bị chặn, có thể dùng mirror tarball trực tiếp với `MILL19_BUILDING_URL` / `MILL19_RUBBLE_URL`, hoặc dùng Google Drive share link với `MILL19_BUILDING_GDRIVE_URL` / `MILL19_RUBBLE_GDRIVE_URL` khi chạy `./run.sh download`.
+Nếu `storage.cmusatyalab.org` bị chặn, có thể dùng mirror tarball trực tiếp với `MILL19_BUILDING_URL` / `MILL19_RUBBLE_URL`, hoặc dùng Google Drive share link với `MILL19_BUILDING_GDRIVE_URL` / `MILL19_RUBBLE_GDRIVE_URL` khi chạy `./run.sh download`. `run.sh` sẽ dùng `gdown --fuzzy` để hỗ trợ link dạng `view`.
 
 Nếu download bị gián đoạn vì SSL EOF thì `./run.sh download` với mirror sẽ tiếp tục từ file partial nếu đã tồn tại.
 - `nerfstudio-poster`: dataset nhỏ để sanity-check pipeline.

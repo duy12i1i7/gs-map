@@ -40,11 +40,13 @@ Bạn có thể dùng mirror riêng nếu đã có URL file tarball:
 MILL19_BUILDING_URL="https://your-mirror/building-pixsfm.tgz" ./run.sh download mill19-building
 ```
 
-Hoặc dùng Google Drive share link trực tiếp:
+Hoặc dùng Google Drive share link trực tiếp. `run.sh` giờ gọi `gdown --fuzzy` để tự động xử lý link dạng `view`.
 
 ```bash
 MILL19_BUILDING_GDRIVE_URL="https://drive.google.com/file/d/1tqc5VoPRHZqSTHhCFnHXpbs1JGWmYQAe/view?usp=drive_link" ./run.sh download mill19-building
 ```
+
+Nếu link Google Drive không phải tarball trực tiếp thì hãy dùng dạng `https://drive.google.com/uc?id=<ID>` hoặc kiểm tra file public share.
 
 Nếu download bị gián đoạn vì `curl: (56) OpenSSL SSL_read: error:0A000126:SSL routines::unexpected eof while reading`, `run.sh` sẽ tiếp tục từ file partial nếu đã có.
 
