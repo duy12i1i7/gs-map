@@ -33,6 +33,12 @@ ITERATIONS=1000 ./run.sh train synthetic-map
 
 Mill 19 là dataset large-scale aerial/industrial scene từ Mega-NeRF. Trong project này, dataset được tải bằng `ns-download-data mill19` và train bằng Nerfstudio `splatfacto`.
 
+Nếu `./run.sh download mill19-building` báo lỗi `curl: (28) Failed to connect` thì đó là do server nguồn hoặc mạng của bạn đang không kết nối được tới `storage.cmusatyalab.org`.
+Bạn có thể dùng mirror riêng nếu đã có URL file tarball:
+
+```bash
+MILL19_BUILDING_URL="https://your-mirror/building-pixsfm.tgz" ./run.sh download mill19-building
+```
 ```bash
 ./run.sh download mill19-building
 ITERATIONS=30000 ./run.sh train mill19-building

@@ -30,25 +30,30 @@ Usage:
   ./run.sh datasets
   ./run.sh download <dataset>
   ./run.sh train <dataset>
-  ./run.sh eval <dataset>
-  ./run.sh export <dataset>
+  ./run.sh train-path <dataset-path> <experiment-name>
+  ./run.sh eval <dataset|config.yml>
+  ./run.sh export <dataset|config.yml>
   ./run.sh viewer <dataset|config.yml>
+  ./run.sh preprocess <dataset> [keep-ratio]
   ./run.sh shell
   ./run.sh quickstart
+  ./run.sh preprocess-raw <raw-image-dir> <output-name> [keep-ratio]
+  ./run.sh process-images <raw-image-dir> <output-name>
+  ./run.sh benchmark-pointcloud <raw-image-dir> <scene-name> [keep-ratio]
 
 Datasets:
-  synthetic-map    Local generated map-like smoke-test dataset.
-  blender-chair    Classic NeRF Synthetic scene.
-  blender-drums    Classic NeRF Synthetic scene.
-  blender-ficus    Classic NeRF Synthetic scene.
-  blender-hotdog   Classic NeRF Synthetic scene.
-  mill19-building  Aerial/industrial map-like scene from Mill 19.
-  mill19-rubble    Aerial/industrial map-like scene from Mill 19.
+  synthetic-map     Local generated map-like smoke-test dataset.
+  blender-chair     Classic NeRF Synthetic scene.
+  blender-drums     Classic NeRF Synthetic scene.
+  blender-ficus     Classic NeRF Synthetic scene.
+  blender-hotdog    Classic NeRF Synthetic scene.
+  mill19-building   Aerial/industrial map-like scene from Mill 19.
+  mill19-rubble     Aerial/industrial map-like scene from Mill 19.
   nerfstudio-poster Small sanity-check dataset.
-  blender-lego     Synthetic NeRF dataset scene.
+  blender-lego      Synthetic NeRF dataset scene.
   blender-materials Synthetic NeRF dataset scene.
-  blender-mic      Synthetic NeRF dataset scene.
-  blender-ship     Synthetic NeRF dataset scene.
+  blender-mic       Synthetic NeRF dataset scene.
+  blender-ship      Synthetic NeRF dataset scene.
 
 Useful env vars:
   ITERATIONS=7000            Reduce train time for a smoke run.
@@ -60,6 +65,11 @@ Useful env vars:
   GSMAP_BACKEND=native       Use local ns-* commands.
   NERFSTUDIO_IMAGE=...       Override Docker image.
   ALLOW_NO_NVIDIA=1          Skip NVIDIA host check for non-training commands.
+
+Examples:
+  ./run.sh download blender-lego
+  ./run.sh preprocess blender-lego 0.5
+  ITERATIONS=7000 ./run.sh train-path data/pruned/blender-lego-pruned-0.5 blender-lego-pruned-0.5
 EOF
 }
 
@@ -131,22 +141,42 @@ dataset_path_host() {
 
 download_command() {
   case "${1:-}" in
-    synthetic-map) echo "python3 scripts/make_synthetic_map.py /workspace/data/synthetic-map" ;;
+    synthetic-map)
+      echo "python3 scripts/make_synthetic_map.py /workspace/data/synthetic-map"
+      ;;
     blender-chair|blender-drums|blender-ficus|blender-hotdog|blender-lego|blender-materials|blender-mic|blender-ship)
       local scene="${1#blender-}"
       echo "python3 scripts/download_blender_scene.py '${scene}' '/workspace/data/blender/${scene}'"
       ;;
-    mill19-building) echo "ns-download-data mill19 --capture-name building --save-dir /workspace/data" ;;
-    mill19-rubble) echo "ns-download-data mill19 --capture-name rubble --save-dir /workspace/data" ;;
-    nerfstudio-poster) echo "ns-download-data nerfstudio --capture-name poster --save-dir /workspace/data" ;;
+    mill19-building)
+      if [[ -n "${MILL19_BUILDING_URL:-}" ]]; then
+        echo "mkdir -p /workspace/data/mill19 && curl -L --fail --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 600 '${MILL19_BUILDING_URL}' -o /workspace/data/mill19/building.tgz && tar -xzf /workspace/data/mill19/building.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/building.tgz"
+      else
+        echo "ns-download-data mill19 --capture-name building --save-dir /workspace/data"
+      fi
+      ;;
+    mill19-rubble)
+      if [[ -n "${MILL19_RUBBLE_URL:-}" ]]; then
+        echo "mkdir -p /workspace/data/mill19 && curl -L --fail --retry 5 --retry-delay 5 --connect-timeout 30 --max-time 600 '${MILL19_RUBBLE_URL}' -o /workspace/data/mill19/rubble.tgz && tar -xzf /workspace/data/mill19/rubble.tgz -C /workspace/data/mill19 && rm -f /workspace/data/mill19/rubble.tgz"
+      else
+        echo "ns-download-data mill19 --capture-name rubble --save-dir /workspace/data"
+      fi
+      ;;
+    nerfstudio-poster)
+      echo "ns-download-data nerfstudio --capture-name poster --save-dir /workspace/data"
+      ;;
     *) return 1 ;;
   esac
 }
 
 dataparser_command() {
   case "${1:-}" in
-    blender-chair|blender-drums|blender-ficus|blender-hotdog|blender-lego|blender-materials|blender-mic|blender-ship) echo "blender-data" ;;
-    *) echo "" ;;
+    blender-chair|blender-drums|blender-ficus|blender-hotdog|blender-lego|blender-materials|blender-mic|blender-ship)
+      echo "blender-data"
+      ;;
+    *)
+      echo ""
+      ;;
   esac
 }
 
@@ -156,7 +186,9 @@ ensure_dataset_name() {
 
 backend() {
   case "${GSMAP_BACKEND}" in
-    native|docker) echo "${GSMAP_BACKEND}" ;;
+    native|docker)
+      echo "${GSMAP_BACKEND}"
+      ;;
     auto)
       if have ns-train && have ns-download-data; then
         echo "native"
@@ -164,7 +196,9 @@ backend() {
         echo "docker"
       fi
       ;;
-    *) die "GSMAP_BACKEND must be auto, docker, or native" ;;
+    *)
+      die "GSMAP_BACKEND must be auto, docker, or native"
+      ;;
   esac
 }
 
@@ -176,8 +210,9 @@ gpu_available_or_die() {
   if [[ "${ALLOW_NO_NVIDIA}" == "1" ]]; then
     return
   fi
+
   if ! have nvidia-smi; then
-    die "No NVIDIA GPU detected on the host. Train on Linux with NVIDIA/CUDA, or set ALLOW_NO_NVIDIA=1 for download/shell only."
+    die "No NVIDIA GPU detected on the host. Train on Linux with NVIDIA/CUDA, or set ALLOW_NO_NVIDIA=1 for download/shell/preprocess only."
   fi
 }
 
@@ -206,13 +241,15 @@ docker_run() {
 }
 
 native_run() {
-  have ns-train || die "ns-train not found. Run './run.sh setup' for Docker, or install Nerfstudio and set GSMAP_BACKEND=native."
-  have ns-download-data || die "ns-download-data not found. Install Nerfstudio and set GSMAP_BACKEND=native."
   local command="$*"
+
+  # Chỉ bắt buộc ns-train/ns-download-data cho các lệnh Nerfstudio.
+  # Preprocess chỉ cần Python + OpenCV, nên không ép phải có ns-train.
   command="${command//\/workspace\/data/${DATA_DIR}}"
   command="${command//\/workspace\/outputs/${OUTPUT_DIR}}"
   command="${command//\/workspace\/exports/${EXPORT_DIR}}"
   command="${command//\/workspace\/.home\/.cache/${CACHE_DIR}}"
+
   bash -lc "${command}"
 }
 
@@ -226,13 +263,16 @@ run_backend() {
 latest_config() {
   local dataset="$1"
   local match
+
   match="$(find "${OUTPUT_DIR}/${dataset}" -path '*/config.yml' -type f 2>/dev/null | sort | tail -n 1 || true)"
+
   [[ -n "${match}" ]] || return 1
   echo "${match}"
 }
 
 config_arg_container() {
   local arg="$1"
+
   if [[ -f "${arg}" ]]; then
     case "$(backend)" in
       native) echo "${arg}" ;;
@@ -241,35 +281,61 @@ config_arg_container() {
     return
   fi
 
-  ensure_dataset_name "${arg}"
   local config
   config="$(latest_config "${arg}")" || die "No config.yml found for '${arg}'. Train it first."
+
   case "$(backend)" in
     native) echo "${config}" ;;
     docker) echo "/workspace/${config#"${ROOT_DIR}/"}" ;;
   esac
 }
 
+path_arg_container() {
+  local path="$1"
+
+  if [[ "${path}" = /* ]]; then
+    case "$(backend)" in
+      native) echo "${path}" ;;
+      docker)
+        if [[ "${path}" == "${ROOT_DIR}"* ]]; then
+          echo "/workspace/${path#"${ROOT_DIR}/"}"
+        else
+          echo "${path}"
+        fi
+        ;;
+    esac
+  else
+    case "$(backend)" in
+      native) echo "${ROOT_DIR}/${path}" ;;
+      docker) echo "/workspace/${path}" ;;
+    esac
+  fi
+}
+
 print_datasets() {
   cat <<'EOF'
 Available datasets:
-  synthetic-map     Local generated map-like smoke-test dataset, no download needed.
-  blender-lego      Recommended famous lightweight benchmark scene.
-  blender-chair     Classic NeRF Synthetic scene.
-  blender-drums     Classic NeRF Synthetic scene.
-  blender-ficus     Classic NeRF Synthetic scene.
-  blender-hotdog    Classic NeRF Synthetic scene.
-  blender-materials Classic NeRF Synthetic scene.
-  blender-mic       Classic NeRF Synthetic scene.
-  blender-ship      Classic NeRF Synthetic scene.
-  mill19-building   Recommended map-like run. Large aerial/industrial scene.
-  mill19-rubble     Recommended map-like run. Large aerial/industrial scene.
-  nerfstudio-poster Small sanity-check dataset before spending GPU time.
+  synthetic-map      Local generated map-like smoke-test dataset, no download needed.
+  blender-lego       Recommended famous lightweight benchmark scene.
+  blender-chair      Classic NeRF Synthetic scene.
+  blender-drums      Classic NeRF Synthetic scene.
+  blender-ficus      Classic NeRF Synthetic scene.
+  blender-hotdog     Classic NeRF Synthetic scene.
+  blender-materials  Classic NeRF Synthetic scene.
+  blender-mic        Classic NeRF Synthetic scene.
+  blender-ship       Classic NeRF Synthetic scene.
+  mill19-building    Recommended map-like run. Large aerial/industrial scene.
+  mill19-rubble      Recommended map-like run. Large aerial/industrial scene.
+  nerfstudio-poster  Small sanity-check dataset before spending GPU time.
 
 Suggested first GPU run:
   ./run.sh download blender-lego
   ITERATIONS=7000 ./run.sh train blender-lego
   ./run.sh viewer blender-lego
+
+Suggested pruning experiment:
+  ./run.sh preprocess blender-lego 0.5
+  ITERATIONS=7000 ./run.sh train-path data/pruned/blender-lego-pruned-0.5 blender-lego-pruned-0.5
 EOF
 }
 
@@ -286,15 +352,23 @@ doctor() {
   echo "C++ compiler: ${CXX:-system default}"
   echo "CUDA host compiler: ${CUDAHOSTCXX:-system default}"
   echo
-  printf "docker: "; have docker && docker --version || echo "not found"
-  printf "nvidia-smi: "; have nvidia-smi && nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader || echo "not found"
-  printf "ns-train: "; have ns-train && command -v ns-train || echo "not found"
-  printf "ns-download-data: "; have ns-download-data && command -v ns-download-data || echo "not found"
+  printf "docker: "
+  have docker && docker --version || echo "not found"
+  printf "nvidia-smi: "
+  have nvidia-smi && nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader || echo "not found"
+  printf "ns-train: "
+  have ns-train && command -v ns-train || echo "not found"
+  printf "ns-download-data: "
+  have ns-download-data && command -v ns-download-data || echo "not found"
+  printf "python3: "
+  have python3 && command -v python3 || echo "not found"
 }
 
 setup() {
   case "$(backend)" in
     native)
+      have ns-train || die "ns-train not found. Install Nerfstudio or set GSMAP_BACKEND=docker."
+      have ns-download-data || die "ns-download-data not found. Install Nerfstudio or set GSMAP_BACKEND=docker."
       echo "Native Nerfstudio commands found."
       ns-train --help >/dev/null
       ;;
@@ -309,19 +383,45 @@ setup() {
 download_dataset() {
   local dataset="$1"
   ensure_dataset_name "${dataset}"
+
   local command
   command="$(download_command "${dataset}")"
-  run_backend "python3 -m pip install -q huggingface_hub && mkdir -p /workspace/data && ${command}"
+
+  ALLOW_NO_NVIDIA=1 run_backend "
+    if command -v apt-get >/dev/null 2>&1; then
+      apt-get update -qq &&
+      DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl unzip
+    fi
+
+    mkdir -p /workspace/.home && cat > /workspace/.home/.curlrc <<'EOF'
+retry = 5
+retry-delay = 5
+connect-timeout = 30
+max-time = 120
+EOF
+
+    python3 -m pip install -q huggingface_hub gdown &&
+    mkdir -p /workspace/data &&
+    ${command}
+  "
 }
 
 train_dataset() {
   local dataset="$1"
   ensure_dataset_name "${dataset}"
+
   local data_path
   local dataparser
+
   data_path="$(dataset_path_container "${dataset}")"
   dataparser="$(dataparser_command "${dataset}")"
-  run_backend "test -d '${data_path}' || { echo 'Dataset missing: ${data_path}. Run ./run.sh download ${dataset} first.' >&2; exit 2; }
+
+  run_backend "
+    test -d '${data_path}' || {
+      echo 'Dataset missing: ${data_path}. Run ./run.sh download ${dataset} first.' >&2
+      exit 2
+    }
+
     mkdir -p /workspace/outputs &&
     ns-train splatfacto \
       --data '${data_path}' \
@@ -332,29 +432,72 @@ train_dataset() {
       --viewer.websocket-host 0.0.0.0 \
       --viewer.websocket-port '${PORT}' \
       --viewer.quit-on-train-completion '${VIEWER_QUIT_ON_TRAIN_COMPLETION}' \
-      ${dataparser}"
+      ${dataparser}
+  "
+}
+
+train_path() {
+  local dataset_path="$1"
+  local experiment_name="$2"
+  local dataparser="${3:-}"
+
+  local data_path_container
+  data_path_container="$(path_arg_container "${dataset_path}")"
+
+  run_backend "
+    test -d '${data_path_container}' || {
+      echo 'Dataset missing: ${data_path_container}' >&2
+      exit 2
+    }
+
+    mkdir -p /workspace/outputs &&
+    ns-train splatfacto \
+      --data '${data_path_container}' \
+      --experiment-name '${experiment_name}' \
+      --output-dir /workspace/outputs \
+      --machine.num-devices '${NUM_DEVICES}' \
+      --max-num-iterations '${ITERATIONS}' \
+      --viewer.websocket-host 0.0.0.0 \
+      --viewer.websocket-port '${PORT}' \
+      --viewer.quit-on-train-completion '${VIEWER_QUIT_ON_TRAIN_COMPLETION}' \
+      ${dataparser}
+  "
 }
 
 eval_dataset() {
   local dataset="$1"
   local config
   config="$(config_arg_container "${dataset}")"
+
   local output="/workspace/outputs/${dataset}/eval.json"
-  run_backend "mkdir -p /workspace/outputs/${dataset} && ns-eval --load-config '${config}' --output-path '${output}'"
+
+  run_backend "
+    mkdir -p /workspace/outputs/${dataset} &&
+    ns-eval --load-config '${config}' --output-path '${output}'
+  "
 }
 
 export_dataset() {
   local dataset="$1"
   local config
   config="$(config_arg_container "${dataset}")"
-  run_backend "mkdir -p /workspace/exports/${dataset} && ns-export gaussian-splat --load-config '${config}' --output-dir /workspace/exports/${dataset}"
+
+  run_backend "
+    mkdir -p /workspace/exports/${dataset} &&
+    ns-export gaussian-splat --load-config '${config}' --output-dir /workspace/exports/${dataset}
+  "
 }
 
 viewer() {
   local target="$1"
   local config
   config="$(config_arg_container "${target}")"
-  run_backend "ns-viewer --load-config '${config}' --viewer.websocket-host 0.0.0.0 --viewer.websocket-port '${PORT}'"
+
+  run_backend "
+    ns-viewer --load-config '${config}' \
+      --viewer.websocket-host 0.0.0.0 \
+      --viewer.websocket-port '${PORT}'
+  "
 }
 
 quickstart() {
@@ -363,23 +506,270 @@ quickstart() {
   train_dataset blender-lego
 }
 
+preprocess_dataset() {
+  local dataset="$1"
+  local keep_ratio="${2:-0.5}"
+
+  ensure_dataset_name "${dataset}"
+
+  local src_path
+  src_path="$(dataset_path_container "${dataset}")"
+
+  local dst_name="${dataset}-pruned-${keep_ratio}"
+  local dst_path="/workspace/data/pruned/${dst_name}"
+
+  run_backend "
+    test -f scripts/select_important_views.py || {
+      echo 'Missing script: scripts/select_important_views.py' >&2
+      exit 2
+    }
+
+    python3 -m pip install -q opencv-python-headless &&
+    python3 scripts/select_important_views.py \
+      --input '${src_path}' \
+      --output '${dst_path}' \
+      --keep-ratio '${keep_ratio}'
+  "
+
+  echo
+  echo "Pruned dataset name: ${dst_name}"
+  echo "Pruned dataset path: data/pruned/${dst_name}"
+  echo
+  echo "Next command:"
+  echo "  ITERATIONS=7000 ./run.sh train-path data/pruned/${dst_name} ${dst_name}"
+}
+preprocess_raw_images() {
+  local raw_image_dir="$1"
+  local output_name="$2"
+  local keep_ratio="${3:-0.5}"
+
+  local raw_path_container
+  raw_path_container="$(path_arg_container "${raw_image_dir}")"
+
+  local dst_path="/workspace/data/raw-pruned/${output_name}"
+
+  run_backend "
+    test -d '${raw_path_container}' || {
+      echo 'Raw image dir missing: ${raw_path_container}' >&2
+      exit 2
+    }
+
+    test -f scripts/select_important_views.py || {
+      echo 'Missing script: scripts/select_important_views.py' >&2
+      exit 2
+    }
+
+    python3 -m pip install -q opencv-python-headless &&
+    python3 scripts/select_important_views.py \
+      --input '${raw_path_container}' \
+      --output '${dst_path}' \
+      --keep-ratio '${keep_ratio}' \
+      --raw
+  "
+
+  echo
+  echo "Pruned raw image dataset: data/raw-pruned/${output_name}"
+  echo "Selected images folder: data/raw-pruned/${output_name}/images"
+}
+process_images_dataset() {
+  local raw_image_dir="$1"
+  local output_name="$2"
+
+  local raw_path_container
+  raw_path_container="$(path_arg_container "${raw_image_dir}")"
+
+  local out_path="/workspace/data/processed/${output_name}"
+
+  run_backend "
+    test -d '${raw_path_container}' || {
+      echo 'Raw image dir missing: ${raw_path_container}' >&2
+      exit 2
+    }
+
+    rm -rf '${out_path}' &&
+    mkdir -p /workspace/data/processed &&
+    ns-process-data images \
+      --data '${raw_path_container}' \
+      --output-dir '${out_path}'
+  "
+
+  echo
+  echo "Processed dataset: data/processed/${output_name}"
+  echo "Train command:"
+  echo "  ITERATIONS=7000 ./run.sh train-path data/processed/${output_name} ${output_name}"
+}
+benchmark_pointcloud_generation() {
+  local raw_image_dir="$1"
+  local scene_name="$2"
+  local keep_ratio="${3:-0.5}"
+
+  local full_name="${scene_name}-full"
+  local pruned_name="${scene_name}-pruned-${keep_ratio}"
+
+  local raw_path_container
+  raw_path_container="$(path_arg_container "${raw_image_dir}")"
+
+  local pruned_raw="/workspace/data/raw-pruned/${pruned_name}"
+  local full_processed="/workspace/data/processed/${full_name}"
+  local pruned_processed="/workspace/data/processed/${pruned_name}"
+
+  local bench_dir="/workspace/benchmarks/${scene_name}"
+
+  run_backend "
+    set -e
+
+    test -d '${raw_path_container}' || {
+      echo 'Raw image dir missing: ${raw_path_container}' >&2
+      exit 2
+    }
+
+    test -f scripts/select_important_views.py || {
+      echo 'Missing script: scripts/select_important_views.py' >&2
+      exit 2
+    }
+
+    test -f scripts/collect_ns_dataset_stats.py || {
+      echo 'Missing script: scripts/collect_ns_dataset_stats.py' >&2
+      exit 2
+    }
+
+    test -f scripts/compare_benchmark.py || {
+      echo 'Missing script: scripts/compare_benchmark.py' >&2
+      exit 2
+    }
+
+    python3 -m pip install -q opencv-python-headless
+
+    mkdir -p '${bench_dir}' /workspace/data/processed /workspace/data/raw-pruned
+
+    echo '=== BASELINE: ns-process-data on all images ==='
+    rm -rf '${full_processed}'
+    start=\$(date +%s.%N)
+    ns-process-data images \
+      --data '${raw_path_container}' \
+      --output-dir '${full_processed}' \
+      2>&1 | tee '${bench_dir}/baseline_ns_process_data.log'
+    end=\$(date +%s.%N)
+    baseline_time=\$(python3 - <<PY
+print(round(${end} - ${start}, 3))
+PY
+)
+
+    python3 scripts/collect_ns_dataset_stats.py \
+      --raw-dir '${raw_path_container}' \
+      --processed-dir '${full_processed}' \
+      --label '${full_name}' \
+      --time-seconds \"\${baseline_time}\" \
+      --output-json '${bench_dir}/baseline_process_stats.json'
+
+    echo '=== PROPOSED: view pruning ==='
+    rm -rf '${pruned_raw}' '${pruned_processed}'
+    python3 scripts/select_important_views.py \
+      --input '${raw_path_container}' \
+      --output '${pruned_raw}' \
+      --keep-ratio '${keep_ratio}' \
+      --raw \
+      2>&1 | tee '${bench_dir}/view_pruning.log'
+
+    echo '=== PROPOSED: ns-process-data on selected images ==='
+    start=\$(date +%s.%N)
+    ns-process-data images \
+      --data '${pruned_raw}/images' \
+      --output-dir '${pruned_processed}' \
+      2>&1 | tee '${bench_dir}/pruned_ns_process_data.log'
+    end=\$(date +%s.%N)
+    pruned_time=\$(python3 - <<PY
+print(round(${end} - ${start}, 3))
+PY
+)
+
+    python3 scripts/collect_ns_dataset_stats.py \
+      --raw-dir '${pruned_raw}/images' \
+      --processed-dir '${pruned_processed}' \
+      --label '${pruned_name}' \
+      --time-seconds \"\${pruned_time}\" \
+      --output-json '${bench_dir}/pruned_process_stats.json'
+
+    python3 scripts/compare_benchmark.py \
+      --baseline-json '${bench_dir}/baseline_process_stats.json' \
+      --pruned-json '${bench_dir}/pruned_process_stats.json' \
+      --output-csv '${bench_dir}/pointcloud_benchmark.csv' \
+      --output-json '${bench_dir}/pointcloud_benchmark.json'
+
+    echo
+    echo 'Benchmark outputs:'
+    echo '  benchmarks/${scene_name}/pointcloud_benchmark.csv'
+    echo '  benchmarks/${scene_name}/pointcloud_benchmark.json'
+  "
+}
 main() {
   local command="${1:-help}"
   shift || true
 
   case "${command}" in
-    help|-h|--help) usage ;;
-    doctor) doctor ;;
-    setup) setup ;;
-    datasets) print_datasets ;;
-    download) [[ $# -eq 1 ]] || die "usage: ./run.sh download <dataset>"; download_dataset "$1" ;;
-    train) [[ $# -eq 1 ]] || die "usage: ./run.sh train <dataset>"; train_dataset "$1" ;;
-    eval) [[ $# -eq 1 ]] || die "usage: ./run.sh eval <dataset>"; eval_dataset "$1" ;;
-    export) [[ $# -eq 1 ]] || die "usage: ./run.sh export <dataset>"; export_dataset "$1" ;;
-    viewer) [[ $# -eq 1 ]] || die "usage: ./run.sh viewer <dataset|config.yml>"; viewer "$1" ;;
-    shell) run_backend "bash" ;;
-    quickstart) quickstart ;;
-    *) die "unknown command '${command}'. Run './run.sh help'." ;;
+    help|-h|--help)
+      usage
+      ;;
+    doctor)
+      doctor
+      ;;
+    setup)
+      setup
+      ;;
+    datasets)
+      print_datasets
+      ;;
+    download)
+      [[ $# -eq 1 ]] || die "usage: ./run.sh download <dataset>"
+      download_dataset "$1"
+      ;;
+    train)
+      [[ $# -eq 1 ]] || die "usage: ./run.sh train <dataset>"
+      train_dataset "$1"
+      ;;
+    train-path)
+      [[ $# -ge 2 && $# -le 3 ]] || die "usage: ./run.sh train-path <dataset-path> <experiment-name> [dataparser]"
+      train_path "$1" "$2" "${3:-}"
+      ;;
+    preprocess-raw)
+      [[ $# -ge 2 && $# -le 3 ]] || die "usage: ./run.sh preprocess-raw <raw-image-dir> <output-name> [keep-ratio]"
+      preprocess_raw_images "$1" "$2" "${3:-0.5}"
+      ;;
+
+    process-images)
+      [[ $# -eq 2 ]] || die "usage: ./run.sh process-images <raw-image-dir> <output-name>"
+      process_images_dataset "$1" "$2"
+      ;;
+
+    benchmark-pointcloud)
+      [[ $# -ge 2 && $# -le 3 ]] || die "usage: ./run.sh benchmark-pointcloud <raw-image-dir> <scene-name> [keep-ratio]"
+      benchmark_pointcloud_generation "$1" "$2" "${3:-0.5}"
+      ;;
+    eval)
+      [[ $# -eq 1 ]] || die "usage: ./run.sh eval <dataset|config.yml>"
+      eval_dataset "$1"
+      ;;
+    export)
+      [[ $# -eq 1 ]] || die "usage: ./run.sh export <dataset|config.yml>"
+      export_dataset "$1"
+      ;;
+    viewer)
+      [[ $# -eq 1 ]] || die "usage: ./run.sh viewer <dataset|config.yml>"
+      viewer "$1"
+      ;;
+    preprocess)
+      [[ $# -ge 1 && $# -le 2 ]] || die "usage: ./run.sh preprocess <dataset> [keep-ratio]"
+      preprocess_dataset "$1" "${2:-0.5}"
+      ;;
+    shell)
+      run_backend "bash"
+      ;;
+    quickstart)
+      quickstart
+      ;;
+    *)
+      die "unknown command '${command}'. Run './run.sh help'."
+      ;;
   esac
 }
 

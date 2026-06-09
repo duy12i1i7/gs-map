@@ -6,3 +6,4 @@ setuptools==69.5.1
 ninja
 huggingface_hub>=0.25
 nerfstudio==1.1.5
+opencv-python-headless

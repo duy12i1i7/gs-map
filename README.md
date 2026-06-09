@@ -56,6 +56,8 @@ Các lựa chọn hiện tại:
 - `synthetic-map`: dataset map-like sinh local để smoke-test, không cần tải ngoài.
 - `mill19-building`: aerial/industrial map-like scene, khuyến nghị chạy đầu tiên nếu muốn dataset liên quan đến map.
 - `mill19-rubble`: aerial/industrial map-like scene khác từ Mill 19.
+
+Nếu `storage.cmusatyalab.org` bị chặn, có thể dùng mirror tarball trực tiếp với `MILL19_BUILDING_URL` hoặc `MILL19_RUBBLE_URL` khi chạy `./run.sh download`.
 - `nerfstudio-poster`: dataset nhỏ để sanity-check pipeline.
 
 ## Lệnh thường dùng
